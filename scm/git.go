@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/blang/semver"
+	"github.com/onbeep/go-scmversion/cmd"
 )
 
 // Provider is the abstraction over interacting with an actual SCM
@@ -17,8 +18,9 @@ type Provider interface {
 	Update(v *semver.Version) error
 }
 
-func NewProvider(log io.Writer, debug bool, dir string) Provider {
-	return &gitter{Log: log, Debug: debug, Dir: dir}
+// NewProvider creates the source-code management tool
+func NewProvider(log io.Writer, o *cmd.Options) Provider {
+	return &gitter{Log: log, Debug: o.Debug, Dir: o.Dir}
 }
 
 type gitter struct {

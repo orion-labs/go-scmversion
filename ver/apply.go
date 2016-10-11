@@ -3,30 +3,15 @@ package ver
 import (
 	"fmt"
 	"io"
-	"os"
 
 	"github.com/onbeep/go-scmversion/bump"
+	"github.com/onbeep/go-scmversion/cmd"
 	"github.com/onbeep/go-scmversion/scm"
 )
 
-// Options are taken in from the command line
-type Options struct {
-	Current bool   `long:"current" description:"Print out the current version and end"`
-	Auto    bool   `long:"auto" description:"Bump the version based on what is found in the logs; default to #patch"`
-	Major   bool   `long:"major" description:"Update Major version"`
-	Minor   bool   `long:"minor" description:"Update Minor version"`
-	Patch   bool   `long:"patch" description:"Update Patch version"`
-	Pre     string `long:"pre" description:"Update prerelease" default:""`
-	Write   bool   `long:"write" description:"Actually write to git and output file"`
-	Dir     string `long:"dir" description:"Directory from which to run the git commands"`
-	File    string `long:"file" default:"./VERSION" description:"File to write with the updated version number"`
-	Debug   bool   `long:"debug" description:"Enable debug logging of the version process"`
-}
-
 // NewProcessor builds the objects that perform the work
-func NewProcessor(o Options) *Processor {
-	g := scm.NewProvider(os.Stdout, o.Debug, o.Dir)
-	return &Processor{Log: os.Stdout, Repo: g}
+func NewProcessor(log io.Writer, p scm.Provider) *Processor {
+	return &Processor{Log: log, Repo: p}
 }
 
 // Processor does the versioning work
@@ -36,7 +21,8 @@ type Processor struct {
 }
 
 // Process actually does the work
-func (p *Processor) Process(o *Options) error {
+// TODO: this can maybe just be turned into a function
+func (p *Processor) Process(o *cmd.Options) error {
 	current, err := p.Repo.Current()
 	if err != nil {
 		return err
@@ -55,16 +41,34 @@ func (p *Processor) Process(o *Options) error {
 
 	updated := *current
 	if bumpMajor || o.Major {
+		if o.Debug {
+			fmt.Fprintf(p.Log, "Bump Major\n")
+		}
 		updated, err = bump.Major(*current)
 	} else if bumpMinor || o.Minor {
+		if o.Debug {
+			fmt.Fprintf(p.Log, "Bump Minor\n")
+		}
 		updated, err = bump.Minor(*current)
 	} else if bumpPatch || o.Patch {
+		if o.Debug {
+			fmt.Fprintf(p.Log, "Bump Patch\n")
+		}
 		updated, err = bump.Patch(*current)
 	} else if o.Pre != "" {
+		if o.Debug {
+			fmt.Fprintf(p.Log, "Bump Prerelease: %s\n", o.Pre)
+		}
 		updated, err = bump.Prerelease(*current, o.Pre)
 	}
 	if err != nil {
 		return err
+	}
+
+	r := &updated
+	if r.Equals(*current) {
+		fmt.Fprintf(p.Log, "No update found: %s\n", updated.String())
+		return fmt.Errorf("no update found")
 	}
 
 	fmt.Fprintf(p.Log, "Updated Version: %s\n", updated.String())
