@@ -52,9 +52,9 @@ func Prerelease(v semver.Version, pre string) (semver.Version, error) {
 	if err != nil {
 		return semver.Version{}, err
 	}
-	if pv.IsNum {
-		return semver.Version{}, fmt.Errorf("bump non-numeric prerelease only")
-	}
+	// if pv.IsNum {
+	// 	return semver.Version{}, fmt.Errorf("bump non-numeric prerelease only")
+	// }
 
 	if len(v.Pre) == 0 {
 		p, perr := Patch(v)
@@ -71,7 +71,7 @@ func Prerelease(v semver.Version, pre string) (semver.Version, error) {
 		Patch: v.Patch,
 	}
 
-	if v.Pre[0].VersionStr != pv.VersionStr {
+	if v.Pre[0].VersionStr != pv.VersionStr || v.Pre[0].VersionNum != pv.VersionNum {
 		r.Pre = []semver.PRVersion{pv}
 		return r, nil
 	}

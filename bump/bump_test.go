@@ -157,6 +157,9 @@ func TestPrereleaseSuccess(t *testing.T) {
 		{"2.3.4-pear", "pear", "2.3.4-pear.1"},
 		{"3.4.5-pear.9", "pear", "3.4.5-pear.10"},
 		{"3.6.9-pear.99.bottles", "pear", "3.6.9-pear.100"},
+		{"4.5.6", "99", "4.5.7-99"},
+		{"4.5.7-99", "100", "4.5.7-100"},
+		{"4.5.7-100", "100", "4.5.7-100.1"},
 	}
 
 	for _, tc := range preData {
@@ -183,7 +186,6 @@ func TestPrereleaseError(t *testing.T) {
 		pre string
 	}{
 		{"0.0.0", "xray.zulu"},
-		{"0.9.9", "123"},
 		{"1.22.333", ""},
 	}
 
