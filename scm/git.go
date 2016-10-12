@@ -111,7 +111,7 @@ func (g *gitter) Update(v *semver.Version) error {
 	tag := v.String()
 	cmt := fmt.Sprintf("Version %s", tag)
 
-	apply := g.cmd("-a", "-m", cmt, tag)
+	apply := g.cmd("tag", "-a", "-m", cmt, tag)
 	err := apply.Run()
 	if err != nil {
 		return err
