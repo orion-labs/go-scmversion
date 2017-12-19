@@ -61,12 +61,14 @@ func (g *gitter) Current() (*semver.Version, error) {
 	// Cycle thru the tags, and evaluate if each might be the latest
 	r, _ := semver.Make("0.0.0")
 	parts := strings.Split(tagOut.String(), "\n")
-	// candidates := make([]string, 0, len(parts))
-	for _, tag := range parts {
+	for ix := len(parts) - 1; ix >= 0; ix-- {
+		tag := parts[ix]
 		if tag == "" {
 			continue
 		}
 		branch := g.cmd("branch", "--contains", tag)
+		var branchOut bytes.Buffer
+		branch.Stdout = &branchOut
 		berr := branch.Run()
 		if berr != nil {
 			fmt.Printf("Err: %s - %v\n", tag, berr)
@@ -83,9 +85,29 @@ func (g *gitter) Current() (*semver.Version, error) {
 			continue
 		}
 
-		if c.GT(r) {
-			r = c
+		if !c.GT(r) {
+			continue
 		}
+
+		// Tring to simulate this: https://github.com/RiotGamesMinions/thor-scmversion/blob/4cf603205075aa7ed8cb3d772fa6b006fcce09fc/lib/thor-scmversion/git_version.rb
+		// def contained_in_current_branch?(tag)
+		//   ShellUtils.sh("git branch --contains #{tag}") =~ /\*/
+		// end
+		found := false
+		containers := strings.Split(branchOut.String(), "\n")
+		for _, contain := range containers {
+			if strings.HasPrefix(contain, "*") {
+				found = true
+				break
+			}
+		}
+		if !found {
+			if g.Debug {
+				fmt.Fprintf(g.Log, "Not in branch: %s\n", tag)
+			}
+			continue
+		}
+		r = c
 	}
 
 	return &r, nil
