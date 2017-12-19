@@ -77,7 +77,9 @@ func (g *gitter) Current() (*semver.Version, error) {
 
 		c, cerr := semver.Make(tag)
 		if cerr != nil {
-			fmt.Printf("Format err: %s\n", tag)
+			if g.Debug {
+				fmt.Fprintf(g.Log, "Format err: %s\n", tag)
+			}
 			continue
 		}
 
