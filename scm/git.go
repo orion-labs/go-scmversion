@@ -3,6 +3,7 @@ package scm
 import (
 	"bytes"
 	"fmt"
+	"github.com/pkg/errors"
 	"io"
 	"os/exec"
 	"strings"
@@ -38,12 +39,13 @@ func (g *gitter) cmd(args ...string) *exec.Cmd {
 }
 
 // Current retrieves the latest version for the current git working directory
-func (g *gitter) Current() (*semver.Version, error) {
+func (g *gitter) Current() (version *semver.Version, err error) {
 	// First, ensure we have all the info locally
 	fetch := g.cmd("fetch", "--all")
 	content, err := fetch.Output()
 	if err != nil {
-		return nil, err
+		err = errors.Wrapf(err, "error running %s", decorateArgs(fetch.Args))
+		return version, err
 	}
 	if g.Debug {
 		fmt.Printf("Fetch output: %s\n", content)
@@ -55,7 +57,8 @@ func (g *gitter) Current() (*semver.Version, error) {
 	tag.Stdout = &tagOut
 	err = tag.Run()
 	if err != nil {
-		return nil, err
+		err = errors.Wrapf(err, "error running %s", decorateArgs(fetch.Args))
+		return version, err
 	}
 
 	// Cycle thru the tags, and evaluate if each might be the latest
@@ -71,8 +74,11 @@ func (g *gitter) Current() (*semver.Version, error) {
 		branch.Stdout = &branchOut
 		berr := branch.Run()
 		if berr != nil {
+
+			berr = errors.Wrapf(berr, "error running %s", decorateArgs(branch.Args))
 			fmt.Printf("Err: %s - %v\n", tag, berr)
 		}
+
 		if g.Debug {
 			fmt.Fprintf(g.Log, "Tag: %s\n", tag)
 		}
@@ -120,14 +126,18 @@ func (g *gitter) Since(v *semver.Version) (hasMajor bool, hasMinor bool, err err
 
 	logs, err := search.Output()
 	if err != nil {
-		return false, false, err
+		err = errors.Wrapf(err, "error running %s", decorateArgs(search.Args))
+		return hasMajor, hasMinor, err
 	}
+
 	if g.Debug {
 		fmt.Printf("Fetch output: %s\n", string(logs))
 	}
+
 	major := bytes.Contains(logs, []byte("#major"))
 	minor := bytes.Contains(logs, []byte("#minor"))
-	return major, minor, nil
+
+	return major, minor, err
 }
 
 // Update the repository (and upstream) with the given version as a tag
@@ -138,9 +148,31 @@ func (g *gitter) Update(v *semver.Version) error {
 	apply := g.cmd("tag", "-a", "-m", cmt, tag)
 	err := apply.Run()
 	if err != nil {
+		err = errors.Wrapf(err, "failed running command: %s", decorateArgs(apply.Args))
 		return err
 	}
 
 	push := g.cmd("push", "--tags")
-	return push.Run()
+	err = push.Run()
+	if err != nil {
+		err = errors.Wrapf(err, "failed running command: %s", decorateArgs(push.Args))
+	}
+
+	return err
+}
+
+func decorateArgs(args []string) (output string) {
+	collector := make([]string, 0)
+
+	for _, arg := range args {
+		if strings.Contains(arg, " ") {
+			collector = append(collector, fmt.Sprintf("%q", arg))
+		} else {
+			collector = append(collector, arg)
+		}
+	}
+
+	output = fmt.Sprintf("'%s'", strings.Join(collector, " "))
+
+	return output
 }
