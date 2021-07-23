@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/blang/semver"
-	"github.com/onbeep/go-scmversion/cmd"
+	"github.com/orion-labs/go-scmversion/cmd"
 )
 
 // OpenerFunc is a function that operats as an `Opener`

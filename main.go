@@ -6,9 +6,9 @@ import (
 	"os"
 
 	"github.com/jessevdk/go-flags"
-	"github.com/onbeep/go-scmversion/bump"
-	"github.com/onbeep/go-scmversion/cmd"
-	"github.com/onbeep/go-scmversion/scm"
+	"github.com/orion-labs/go-scmversion/bump"
+	"github.com/orion-labs/go-scmversion/cmd"
+	"github.com/orion-labs/go-scmversion/scm"
 )
 
 // Opener is a factory to open the local destination of the version number

@@ -1,4 +1,4 @@
-module github.com/onbeep/go-scmversion
+module github.com/orion-labs/go-scmversion
 
 go 1.12
 

@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/blang/semver"
-	"github.com/onbeep/go-scmversion/cmd"
+	"github.com/orion-labs/go-scmversion/cmd"
 )
 
 // Provider is the abstraction over interacting with an actual SCM
